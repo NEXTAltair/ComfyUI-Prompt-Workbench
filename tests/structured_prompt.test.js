@@ -430,6 +430,44 @@ test("scheduleTagToggle flushes previous tag on rapid clicks and binds to origin
   editor.cancelPendingTagToggle();
 });
 
+test("reorderSection moves sections before or after a target with undo support", () => {
+  const noop = () => {};
+  const sec1 = createSection({ id: "sec-1", title: "First", tags: [createTag("a")] });
+  const sec2 = createSection({ id: "sec-2", title: "Second", tags: [createTag("b")] });
+  const sec3 = createSection({ id: "sec-3", title: "Third", tags: [createTag("c")] });
+  const editor = Object.assign(Object.create(PromptEditor.prototype), {
+    sections: [sec1, sec2, sec3],
+    activeSectionId: "sec-1",
+    outputFormat: "tags",
+    wrapBraces: false,
+    includeNegativeInPrompt: false,
+    dirtySectionIds: new Set(),
+    sectionTextareas: new Map(),
+    settings: sanitizeSettings({ autoTranslate: false }),
+    node: { properties: {}, widgets: [], graph: { setDirtyCanvas: noop } },
+    widgets: { prompt: { value: "" }, negative: { value: "" }, outputFormat: { value: "tags" } },
+    undoStack: [],
+    redoStack: [],
+    translationGeneration: 0,
+    applyCustomColors: noop,
+    renderTranslationControls: noop,
+    renderBulk: noop,
+    renderTags: noop,
+    rebuildControls: noop,
+    rebuildSectionViews: noop,
+    setStatus: noop,
+  });
+
+  assert.equal(editor.reorderSection("sec-3", "sec-1", "before"), true);
+  assert.deepEqual(editor.sections.map((s) => s.id), ["sec-3", "sec-1", "sec-2"]);
+
+  assert.equal(editor.reorderSection("sec-3", "sec-2", "after"), true);
+  assert.deepEqual(editor.sections.map((s) => s.id), ["sec-1", "sec-2", "sec-3"]);
+
+  editor.undo();
+  assert.deepEqual(editor.sections.map((s) => s.id), ["sec-3", "sec-1", "sec-2"]);
+});
+
 test("MCP section widgets sync bidirectionally and applyExecutionFeedback updates merged_preview", () => {
   const noop = () => {};
   const widgets = {
