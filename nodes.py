@@ -263,9 +263,12 @@ def _merge_dynamic_section_payload(sections_payload, dynamic_inputs, output_form
                 return normalize_structured_prompt("\n\n".join(text for _, _, text in blocks))
             obj = {}
             for idx, (fallback_key, title, text) in enumerate(blocks):
-                key = _strip_section_brackets(title, fallback_key or f"section_{idx + 1}")
-                if key in obj:
-                    key = f"{key}_{idx + 1}"
+                base_key = _strip_section_brackets(title, fallback_key or f"section_{idx + 1}")
+                key = base_key
+                suffix = idx + 1
+                while key in obj:
+                    key = f"{base_key}_{suffix}"
+                    suffix += 1
                 obj[key] = text
             return json.dumps(obj, ensure_ascii=False, indent=2)
         if output_format == "structured":

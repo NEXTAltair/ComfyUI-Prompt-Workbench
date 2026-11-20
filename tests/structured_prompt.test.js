@@ -386,6 +386,11 @@ test("moveTagsToSection moves single or multi-selected tags across sections with
   assert.deepEqual(editor.sections[0].tags.map((tag) => tag.value), ["silver_hair", "white_dress"]);
   assert.equal(editor.sections[2].proseText, "Eye-level 50mm. 1girl");
   assert.deepEqual(editor.sections[2].tags.map((tag) => [tag.value, tag.enabled]), [["hidden_tag", false]]);
+
+  // Switching the prose section back to tags mode preserves the disabled tag.
+  editor.activeSectionId = "sec-3";
+  editor.setActiveSectionMode("tags");
+  assert.ok(editor.sections[2].tags.some((tag) => tag.value === "hidden_tag" && tag.enabled === false));
 });
 
 test("scheduleTagToggle flushes previous tag on rapid clicks and binds to original section", () => {

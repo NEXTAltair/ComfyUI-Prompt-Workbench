@@ -102,6 +102,26 @@ class TestPromptWorkbenchNode(unittest.TestCase):
         self.assertEqual(out_first, "base_word, lora_word")
         self.assertEqual(out_second, "1girl")
 
+        # Duplicate JSON key suffixes must never collide with an explicit suffixed title like A_3.
+        collision_payload = json.dumps({
+            "version": 1,
+            "sections": [
+                {"id": "s1", "title": "【A】", "socket_name": "【A】", "role": "positive", "mode": "tags", "enabled": True, "text": "first"},
+                {"id": "s2", "title": "【A_3】", "socket_name": "【A_3】", "role": "positive", "mode": "tags", "enabled": True, "text": "second"},
+                {"id": "s3", "title": "【A】", "socket_name": "【A】", "role": "positive", "mode": "tags", "enabled": True, "text": "third"},
+            ],
+        }, separators=(",", ":"))
+        col_prompt, _ = node.emit_prompt(
+            prompt="",
+            negative="",
+            output_format="json",
+            sections_payload=collision_payload,
+            **{"【A】": "extra"},
+        )
+        col_obj = json.loads(col_prompt)
+        self.assertEqual(len(col_obj), 3)
+        self.assertEqual(col_obj["A_3"], "second")
+
     def test_mcp_node_declares_stable_widgets_and_compact_default_outputs(self):
         opt = PromptWorkbenchMCP.INPUT_TYPES()["optional"]
         expected_widgets = [

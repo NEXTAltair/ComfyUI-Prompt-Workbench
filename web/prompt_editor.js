@@ -4149,8 +4149,9 @@ export class PromptEditor {
       }
       active.mode = "prose";
     } else {
+      const disabledTags = (active.tags || []).filter((tag) => tag.enabled === false);
       const parsed = parsePrompt(active.proseText || "", (active.tags || []).filter((tag) => tag.enabled !== false));
-      active.tags = tagsWithoutTrailingPlaceholder(parsed);
+      active.tags = [...tagsWithoutTrailingPlaceholder(parsed), ...disabledTags];
       active.trailingSeparator = parsed.trailingSeparator;
       active.mode = "tags";
     }
@@ -4164,10 +4165,14 @@ export class PromptEditor {
     const active = this.activeSection();
     if (!active || active.mode !== "prose" || !this.proseOrigTextarea) return;
     const text = this.proseOrigTextarea.value;
+    const disabledTags = (active.tags || []).filter((tag) => tag.enabled === false);
     active.proseText = text;
-    active.tags = text.trim()
-      ? [createTag(text.trim(), { translation: active.translation, translatedTo: active.translatedTo })]
-      : [];
+    active.tags = [
+      ...(text.trim()
+        ? [createTag(text.trim(), { translation: active.translation, translatedTo: active.translatedTo })]
+        : []),
+      ...disabledTags,
+    ];
     const card = this.sectionsContainer?.querySelector(`[data-section-id="${active.id}"]`);
     const origEl = card?.querySelector(".paio-section-orig-line");
     if (origEl) origEl.textContent = text.trim() || t("（空 — 右ペインで入力）");
